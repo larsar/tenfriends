@@ -1,6 +1,8 @@
 local storyboard = require("storyboard")
 local scene = storyboard.newScene()
 local physics = require "physics"
+local physicsData = (require "shapedefs").physicsData(1.0)
+
 physics.start()
 --physics.pause()
 
@@ -13,14 +15,28 @@ function scene:createScene(event)
     
     local background = display.newImage("glassbg.png", true)    
     
-    local floor = display.newRect(0, screenH, 10, 10)  
---local lWall = display.newRect(0, 480, 320, 1)  
---local rWall = display.newRect(0, -1, 320, 1)  
+    local floor = display.newRect(0, screenH, screenW, screenH)  
+local lWall = display.newRect(0, 0, 0, screenH)  
+local rWall = display.newRect(screenW, 0, screenW, screenH)  
 staticMaterial = {density=2, friction=.3, bounce=.4}  
---physics.addBody(floor, "static", staticMaterial)  
---physics.addBody(lWall, "static", staticMaterial)  
---physics.addBody(rWall, "static", staticMaterial)  
+physics.addBody(floor, "static", staticMaterial)  
+physics.addBody(lWall, "static", staticMaterial)  
+physics.addBody(rWall, "static", staticMaterial)  
 
+end
+
+local removeObj = function( event )
+	local t = event.target
+	local phase = event.phase
+
+	if "began" == phase then
+		local myIndex = t.myIndex
+		print( "breaking joint at board#" .. myIndex )
+		joint[myIndex]:removeSelf() -- destroy joint
+	end
+
+	-- Stop further propagation of touch event
+	return true
 end
 
 function scene:enterScene( event )
@@ -48,10 +64,10 @@ addEventListeners()
 function newItem()	
     
 	-- set the graphics 
-	obj = display.newImage("rock.png");
+	obj = display.newImage("orange.png");
 
 	-- set the shape
-	physics.addBody( obj, { density=1.0, friction=0.3, bounce=0.3 })	
+	physics.addBody( obj, physicsData:get("orange"))	
 	
 	-- random start location
 	obj.x = 60 + math.random( 160 )
