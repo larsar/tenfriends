@@ -3,14 +3,16 @@ local scene = storyboard.newScene()
 local physics = require "physics"
 local physicsData = (require "shapedefs").physicsData(1.0)
 
-physics.setGravity(20,0)
 physics.start()
+physics.setGravity(0,2)
+
 --physics.pause()
 
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 local balls = {}
 local ballIndex = 1
 
+local activeBall1 = nil
 
 function scene:createScene(event)
     print(screenW)
@@ -28,16 +30,28 @@ function scene:createScene(event)
     
 end
 
-local removeObj = function( event )
+local activate = function( event )
     local t = event.target
     local phase = event.phase
     
-    print(phase)
+
     
     if "began" == phase then
         local myIndex = t.myIndex
-        print( "removing ball #" .. myIndex )
-        balls[myIndex]:removeSelf() -- destroy joint
+        local ball = balls[myIndex]
+        if activeBall1 == nil then
+            activeBall1 = balls[myIndex]
+        elseif ball ~= activeBall1 then
+            
+            if activeBall1.value + ball.value == 10 then
+                print("Yey")
+                activeBall1:removeSelf()
+                ball:removeSelf()
+            end
+            activeBall1 = nil
+        end
+       -- print( "removing ball #" .. myIndex )
+       -- balls[myIndex]:removeSelf() -- destroy joint
     end
     
     -- Stop further propagation of touch event
@@ -65,27 +79,38 @@ end
 
 addEventListeners()
 
+function onCollision( event )
+    if ( event.phase == "began" ) then
+
+        print( "began: " .. event.selfElement.myName .. " & " .. event.otherElement.myName )
+
+    elseif ( event.phase == "ended" ) then
+
+        print( "ended: " .. event.selfElement.myName .. " & " .. event.otherElement.myName )
+    end
+end
+
 -- create a random new object
 function newItem()	
-    
-    -- set the graphics 
-    obj = display.newImage("orange.png");
-    
-    -- set the shape
+    num = math.random(0,9)
+    obj = display.newImage(num..".png");
     physics.addBody( obj, physicsData:get("orange"))	
     
     -- random start location
-    obj.x = 60 + math.random( 160 )
-    obj.y = -100
+    obj.x = 60 + math.random( screenW-60 )
+    obj.y = -60
     
     -- add collision handler
-    -- obj.collision = onLocalCollision
-    obj:addEventListener( "touch", removeObj )
+   -- obj.collision = onLocalCollision
+    obj.myName = "Foobar"
+    obj.value = num
+    obj:addEventListener( "touch", activate )
+  --  obj:addEventListener( "collision", onCollision)
     balls[ballIndex] = obj
     obj.myIndex = ballIndex
     ballIndex = ballIndex + 1
 end
 
-local dropCrates = timer.performWithDelay( 500, newItem, 100 )
+local dropCrates = timer.performWithDelay( 2000, newItem, 30 )
 
 return scene
